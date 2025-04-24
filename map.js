@@ -24,7 +24,6 @@ setTimeout(() => map.fire('load'), 500); // Fallback in case load event doesn't 
 const layerSettlements = L.layerGroup().addTo(map);
 const layerNationBorders = L.layerGroup();
 const layerConflict = L.layerGroup();
-const layerTrade = L.layerGroup();
 const layerMana = L.layerGroup();
 const layerFaith = L.layerGroup();
 
@@ -59,19 +58,6 @@ L.circle([550, 880], {
   radius: 100
 }).bindPopup("⚔️ <b>Battle of Crimson Hollow</b><br>Blood stains the earth where two armies clashed.").addTo(layerConflict);
 
-// === Trade Route ===
-L.polyline([[400, 500], [600, 960]], {
-  color: '#d4af37',
-  weight: 3,
-  dashArray: '5,10',
-  opacity: 0.8
-}).bindPopup(`
-  <b>Trade Route: Duskhaven ⇄ Whispershade</b><br>
-  📦 Goods: Spices, Ritual Cloth<br>
-  🔁 Type: Mutual Exchange<br>
-  📊 Stability: High
-`).addTo(layerTrade);
-
 // === Mana Zone ===
 L.polygon([[300, 800], [340, 820], [360, 780], [320, 760]], {
   color: '#00d4ff',
@@ -99,7 +85,6 @@ L.control.layers(null, {
   "🏘 Settlements": layerSettlements,
   "🧭 Nation Borders": layerNationBorders,
   "⚔️ Conflict Zones": layerConflict,
-  "💰 Trade Routes": layerTrade,
   "🌊 Mana Zones": layerMana,
   "🕍 Faith Influence": layerFaith
 }, { position: 'topright' }).addTo(map);
@@ -129,7 +114,7 @@ travelControl.addTo(map);
 const distanceToggle = L.control({ position: 'topright' });
 distanceToggle.onAdd = function () {
   const div = L.DomUtil.create('div', 'leaflet-bar');
-  div.innerHTML = '<a href="#" id="toggleMeasure" title="Measure Distance">📏<br>Measure</a>';
+  div.innerHTML = '<a href="#" id="toggleMeasure" title="Measure Distance">📏</a>';
   return div;
 };
 distanceToggle.addTo(map);
@@ -144,14 +129,15 @@ setTimeout(() => {
     travelSpeed = travelMode === "Foot" ? 5 : travelMode === "Carriage" ? 6 : 8;
   });
 
-  toggleMeasure.onclick = function (e) {
+  toggleMeasure.addEventListener('click', function (e) {
     e.preventDefault();
+    L.DomEvent.stopPropagation(e); // Prevent the click from bubbling to the map
     measureMode = !measureMode;
     toggleMeasure.classList.toggle('active', measureMode);
     if (measureLine) map.removeLayer(measureLine);
     measureLine = null;
     measurePoints = [];
-  };
+  });
 }, 200);
 
 // Distance Logic
