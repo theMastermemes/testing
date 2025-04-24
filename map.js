@@ -128,8 +128,12 @@ legend.addTo(map);
 
 // === Distance Tool + Travel Selector ===
 let measureMode = false;
-let measurePoints = [];
 let measureLine = null;
+let previewLine = null;
+let freeDrawPoints = [];
+let isDrawing = false;
+let isFreeDrawing = false;
+let startPoint = null;
 let travelSpeed = 8;
 let travelMode = "Horseback";
 
@@ -151,7 +155,7 @@ travelControl.addTo(map);
 const distanceToggle = L.control({ position: 'topright' });
 distanceToggle.onAdd = function () {
   const div = L.DomUtil.create('div', 'leaflet-bar');
-  div.innerHTML = '<a href="#" id="toggleMeasure" title="Measure Distance">📏</a>';
+  div.innerHTML = '<a href="#" id="toggleMeasure" title="Measure Distance (Left Click: Drag Line, Right Click: Free Draw)">📏</a>';
   return div;
 };
 distanceToggle.addTo(map);
@@ -172,43 +176,84 @@ setTimeout(() => {
     measureMode = !measureMode;
     toggleMeasure.classList.toggle('active', measureMode);
     if (measureLine) map.removeLayer(measureLine);
+    if (previewLine) map.removeLayer(previewLine);
     measureLine = null;
-    measurePoints = [];
+    previewLine = null;
+    startPoint = null;
+    freeDrawPoints = [];
+    isDrawing = false;
+    isFreeDrawing = false;
   });
 }, 200);
 
-// Distance Logic (Pixel-Based)
-map.on('click', function (e) {
+// Prevent default right-click menu
+map.on('contextmenu', function (e) {
+  L.DomEvent.preventDefault(e);
+});
+
+// Distance Logic with Click-and-Drag and Free-Draw
+map.on('mousedown', function (e) {
   if (!measureMode) return;
 
-  // Log the clicked coordinates for debugging
-  console.log('Clicked at:', e.latlng);
-
-  measurePoints.push(e.latlng);
-
-  if (measurePoints.length > 2) {
-    measurePoints = [measurePoints[1]]; // Continuous measurement
-    if (measureLine) map.removeLayer(measureLine);
-    measureLine = null;
+  if (e.originalEvent.button === 0) { // Left click
+    isDrawing = true;
+    startPoint = e.latlng;
+    previewLine = L.polyline([startPoint, startPoint], {
+      color: '#6fc7d7',
+      weight: 3,
+      dashArray: '5,10'
+    }).addTo(map);
+  } else if (e.originalEvent.button === 2) { // Right click
+    isDrawing = true;
+    isFreeDrawing = true;
+    freeDrawPoints = [e.latlng];
+    previewLine = L.polyline(freeDrawPoints, {
+      color: '#6fc7d7',
+      weight: 3,
+      dashArray: '5,10'
+    }).addTo(map);
   }
+});
 
-  if (measurePoints.length === 2) {
-    // Convert latLng to pixel coordinates
-    const pointA = map.latLngToContainerPoint(measurePoints[0]);
-    const pointB = map.latLngToContainerPoint(measurePoints[1]);
+map.on('mousemove', function (e) {
+  if (!isDrawing || !measureMode) return;
 
-    // Calculate pixel distance
-    const pixelDist = Math.sqrt(
-      Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2)
-    );
+  if (isFreeDrawing) {
+    freeDrawPoints.push(e.latlng);
+    previewLine.setLatLngs(freeDrawPoints);
+  } else {
+    previewLine.setLatLngs([startPoint, e.latlng]);
+  }
+});
+
+map.on('mouseup', function (e) {
+  if (!isDrawing || !measureMode) return;
+
+  if (e.originalEvent.button === 0 || e.originalEvent.button === 2) { // Left or Right click
+    isDrawing = false;
+    if (measureLine) map.removeLayer(measureLine);
+    if (previewLine) map.removeLayer(previewLine);
+
+    let pointsToMeasure = isFreeDrawing ? freeDrawPoints : [startPoint, e.latlng];
+    let totalPixelDist = 0;
+
+    // Calculate total pixel distance for the line
+    for (let i = 0; i < pointsToMeasure.length - 1; i++) {
+      const pointA = map.latLngToContainerPoint(pointsToMeasure[i]);
+      const pointB = map.latLngToContainerPoint(pointsToMeasure[i + 1]);
+      const pixelDist = Math.sqrt(
+        Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2)
+      );
+      totalPixelDist += pixelDist;
+    }
 
     // Convert pixels to km (scale: 100 pixels = 10 km, so 1 pixel = 0.1 km)
-    const km = (pixelDist * 0.1).toFixed(2);
+    const km = (totalPixelDist * 0.1).toFixed(2);
     const baseTime = (km / travelSpeed).toFixed(1);
     const rests = Math.floor(baseTime / 6);
     const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
 
-    measureLine = L.polyline(measurePoints, { color: '#6fc7d7', weight: 3 }).addTo(map);
+    measureLine = L.polyline(pointsToMeasure, { color: '#6fc7d7', weight: 3 }).addTo(map);
     measureLine.bindPopup(`
       <div style="font-size: 1em; padding: 4px 8px;">
         📏 <b>Distance:</b> ${km} km<br>
@@ -218,5 +263,11 @@ map.on('click', function (e) {
         🕒 <b>Total Time:</b> ${totalTime} hrs
       </div>
     `).openPopup();
+
+    // Reset for next measurement
+    previewLine = null;
+    startPoint = null;
+    freeDrawPoints = [];
+    isFreeDrawing = false;
   }
 });
