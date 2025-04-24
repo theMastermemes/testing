@@ -11,7 +11,7 @@ L.control.zoom({ position: 'topright' }).addTo(map);
 
 // Set Map Bounds and Image Overlay
 const bounds = [[0, 0], [1080, 1920]];
-L.imageOverlay('placeholder-map.jpg', bounds).addTo(map);
+const imageOverlay = L.imageOverlay('placeholder-map.jpg', bounds).addTo(map);
 map.fitBounds(bounds);
 
 // Define LatLngBounds for interaction restriction
@@ -24,11 +24,32 @@ function clampLatLng(latlng) {
   return L.latLng(lat, lng);
 }
 
-// Hide Loading Overlay After Map Loads
-map.on('load', () => {
+// Hide Loading Overlay When Image Loads
+imageOverlay.on('load', () => {
+  console.log('Image overlay loaded successfully');
   document.getElementById('loading-overlay').classList.add('hidden');
 });
-setTimeout(() => map.fire('load'), 500);
+
+imageOverlay.on('error', () => {
+  console.error('Failed to load placeholder-map.jpg');
+  document.getElementById('loading-overlay').classList.add('hidden');
+  // Optionally show an error message
+  const errorMessage = L.control({ position: 'topleft' });
+  errorMessage.onAdd = function () {
+    const div = L.DomUtil.create('div', 'error-message');
+    div.innerHTML = 'Failed to load map image. Please check the file path.';
+    return div;
+  };
+  errorMessage.addTo(map);
+});
+
+// Fallback: Hide loading overlay after 5 seconds if the load event doesn't fire
+setTimeout(() => {
+  if (!document.getElementById('loading-overlay').classList.contains('hidden')) {
+    console.warn('Loading overlay timeout reached, hiding overlay');
+    document.getElementById('loading-overlay').classList.add('hidden');
+  }
+}, 5000);
 
 // === Layers ===
 const layerSettlements = L.layerGroup().addTo(map);
@@ -183,7 +204,11 @@ travelControl.addTo(map);
 // Measure Button
 const distanceToggle = L.control({ position: 'topright' });
 distanceToggle.onAdd = function () {
-  const div = L.DomUtil.create('div',фік
+  const div = L.DomUtil.create('div', 'leaflet-bar');
+  div.innerHTML = '<a href="#" id="toggleMeasure" title="Measure Distance (Left Click: Two Points, Right Click: Free Draw)">📏</a>';
+  return div;
+};
+distanceToggle.addTo(map);
 
 // Event Listeners for Travel Selector and Measure Button
 setTimeout(() => {
@@ -300,7 +325,7 @@ map.on('mousemove', function (e) {
   }
 });
 
-// Free-Draw with Right Click (Unchanged)
+// Free-Draw with Right Click
 map.on('mousedown', function (e) {
   if (!measureMode || e.originalEvent.button !== 2) return;
 
