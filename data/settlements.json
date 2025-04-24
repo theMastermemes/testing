@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Whispershade Woods",
+    "type": "village",
+    "lat": 600,
+    "lng": 960,
+    "description": "A hydromancer’s battlefield, where the air hums with arcane residue."
+  },
+  {
+    "id": 2,
+    "name": "Duskhaven",
+    "type": "city",
+    "lat": 400,
+    "lng": 500,
+    "description": "A shadowy port of sea rituals and rogue guilds, cloaked in mist."
+  },
+  {
+    "id": 3,
+    "name": "Shadowwatch Outpost",
+    "type": "outpost",
+    "lat": 700,
+    "lng": 800,
+    "description": "A lonely watchtower guarding the borderlands."
+  }
+]
