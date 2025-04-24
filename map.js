@@ -159,7 +159,7 @@ legend.addTo(map);
 
 // === Distance Tool + Travel Selector ===
 let measureMode = false;
-let measureLine = null;
+let measureLines = []; // Track all measurement lines
 let previewLine = null;
 let freeDrawPoints = [];
 let isDrawing = false;
@@ -168,6 +168,22 @@ let startPoint = null;
 let hasFirstClick = false;
 let travelSpeed = 8;
 let travelMode = "Horseback";
+
+// Function to clear all measurement lines
+function clearMeasureLines() {
+  measureLines.forEach(line => {
+    if (map.hasLayer(line)) {
+      map.removeLayer(line);
+      console.log('Removed a measurement line');
+    }
+  });
+  measureLines = [];
+  if (previewLine && map.hasLayer(previewLine)) {
+    map.removeLayer(previewLine);
+    console.log('Removed preview line');
+  }
+  previewLine = null;
+}
 
 // Feedback Message for Out-of-Bounds
 const outOfBoundsMessage = L.control({ position: 'topleft' });
@@ -229,10 +245,7 @@ setTimeout(() => {
       map.dragging.disable(); // Disable panning while in measure mode
     } else {
       map.dragging.enable(); // Re-enable panning when measure mode is off
-      if (measureLine) map.removeLayer(measureLine);
-      if (previewLine) map.removeLayer(previewLine);
-      measureLine = null;
-      previewLine = null;
+      clearMeasureLines();
       startPoint = null;
       freeDrawPoints = [];
       isDrawing = false;
@@ -285,9 +298,7 @@ map.on('click', function (e) {
 
     // Minimum distance threshold (5 pixels)
     if (totalPixelDist < 5) {
-      if (measureLine) map.removeLayer(measureLine);
-      measureLine = null;
-      previewLine = null;
+      clearMeasureLines();
       startPoint = null;
       return;
     }
@@ -298,9 +309,10 @@ map.on('click', function (e) {
     const rests = Math.floor(baseTime / 6);
     const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
 
-    if (measureLine) map.removeLayer(measureLine);
-    measureLine = L.polyline(pointsToMeasure, { color: '#6fc7d7', weight: 3 }).addTo(map);
-    measureLine.bindPopup(`
+    // Clear previous lines before adding a new one
+    clearMeasureLines();
+    const newLine = L.polyline(pointsToMeasure, { color: '#6fc7d7', weight: 3 }).addTo(map);
+    newLine.bindPopup(`
       <div style="font-size: 1em; padding: 4px 8px;">
         📏 <b>Distance:</b> ${km} km<br>
         🚶 <b>Mode:</b> ${travelMode} (${travelSpeed} km/h)<br>
@@ -309,6 +321,8 @@ map.on('click', function (e) {
         🕒 <b>Total Time:</b> ${totalTime} hrs
       </div>
     `).openPopup();
+    measureLines.push(newLine);
+    console.log('Added new straight line, total lines:', measureLines.length);
 
     // Reset for next measurement
     previewLine = null;
@@ -375,9 +389,7 @@ map.on('mouseup', function (e) {
 
   // Minimum distance threshold (5 pixels)
   if (totalPixelDist < 5) {
-    if (measureLine) map.removeLayer(measureLine);
-    measureLine = null;
-    previewLine = null;
+    clearMeasureLines();
     freeDrawPoints = [];
     return;
   }
@@ -388,9 +400,10 @@ map.on('mouseup', function (e) {
   const rests = Math.floor(baseTime / 6);
   const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
 
-  if (measureLine) map.removeLayer(measureLine);
-  measureLine = L.polyline(pointsToMeasure, { color: '#6fc7d7', weight: 3 }).addTo(map);
-  measureLine.bindPopup(`
+  // Clear previous lines before adding a new one
+  clearMeasureLines();
+  const newLine = L.polyline(pointsToMeasure, { color: '#6fc7d7', weight: 3 }).addTo(map);
+  newLine.bindPopup(`
     <div style="font-size: 1em; padding: 4px 8px;">
       📏 <b>Distance:</b> ${km} km<br>
       🚶 <b>Mode:</b> ${travelMode} (${travelSpeed} km/h)<br>
@@ -399,6 +412,8 @@ map.on('mouseup', function (e) {
       🕒 <b>Total Time:</b> ${totalTime} hrs
     </div>
   `).openPopup();
+  measureLines.push(newLine);
+  console.log('Added new free-draw line, total lines:', measureLines.length);
 
   // Reset for next measurement
   previewLine = null;
