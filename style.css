@@ -125,6 +125,30 @@ body, html {
   transform: scale(1.1);
 }
 
+/* Map Legend */
+.map-legend {
+  background: #2a2a2a;
+  border: 1px solid #6fc7d7;
+  border-radius: 8px;
+  padding: 10px;
+  color: #e0e0e0;
+  font-size: 0.9em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.map-legend h4 {
+  margin: 0 0 10px 0;
+  font-size: 1.1em;
+  color: #6fc7d7;
+}
+.map-legend div {
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+}
+.map-legend img, .map-legend span {
+  margin-right: 5px;
+}
+
 /* Measure Tool Button */
 #toggleMeasure {
   display: flex;
