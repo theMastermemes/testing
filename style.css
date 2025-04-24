@@ -125,6 +125,11 @@ body, html {
   transform: scale(1.1);
 }
 
+/* Annotation Marker */
+.annotation-marker {
+  text-shadow: 0 0 5px #ff5555, 0 0 10px #ff5555;
+}
+
 /* Map Legend */
 .map-legend {
   background: #2a2a2a;
@@ -161,6 +166,17 @@ body, html {
   display: none;
 }
 
+/* Error Message */
+.error-message {
+  background: #2a2a2a;
+  border: 1px solid #ff5555;
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: #ff5555;
+  font-size: 0.9em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
 /* Measure Tool Button */
 #toggleMeasure {
   display: flex;
@@ -192,6 +208,40 @@ body, html {
   color: #1a1a1a;
 }
 #toggleMeasure.active::after {
+  color: #1a1a1a;
+}
+
+/* Annotate Button */
+#toggleAnnotate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #2a2a2a;
+  color: #ff5555;
+  border: 1px solid #ff5555;
+  border-radius: 8px;
+  width: 50px;
+  height: 50px;
+  justify-content: center;
+  font-size: 1.4em;
+  text-align: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+#toggleAnnotate:hover {
+  background: #ff5555;
+  color: #1a1a1a;
+}
+#toggleAnnotate::after {
+  content: "Annotate";
+  font-size: 0.75em;
+  margin-top: 4px;
+  color: #ff5555;
+}
+#toggleAnnotate.active {
+  background: #ff5555;
+  color: #1a1a1a;
+}
+#toggleAnnotate.active::after {
   color: #1a1a1a;
 }
 
