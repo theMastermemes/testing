@@ -144,6 +144,7 @@ let freeDrawPoints = [];
 let isDrawing = false;
 let isFreeDrawing = false;
 let startPoint = null;
+let hasFirstClick = false;
 let travelSpeed = 8;
 let travelMode = "Horseback";
 
@@ -182,11 +183,7 @@ travelControl.addTo(map);
 // Measure Button
 const distanceToggle = L.control({ position: 'topright' });
 distanceToggle.onAdd = function () {
-  const div = L.DomUtil.create('div', 'leaflet-bar');
-  div.innerHTML = '<a href="#" id="toggleMeasure" title="Measure Distance (Left Click: Drag Line, Right Click: Free Draw)">📏</a>';
-  return div;
-};
-distanceToggle.addTo(map);
+  const div = L.DomUtil.create('div',фік
 
 // Event Listeners for Travel Selector and Measure Button
 setTimeout(() => {
@@ -203,14 +200,20 @@ setTimeout(() => {
     L.DomEvent.stopPropagation(e);
     measureMode = !measureMode;
     toggleMeasure.classList.toggle('active', measureMode);
-    if (measureLine) map.removeLayer(measureLine);
-    if (previewLine) map.removeLayer(previewLine);
-    measureLine = null;
-    previewLine = null;
-    startPoint = null;
-    freeDrawPoints = [];
-    isDrawing = false;
-    isFreeDrawing = false;
+    if (measureMode) {
+      map.dragging.disable(); // Disable panning while in measure mode
+    } else {
+      map.dragging.enable(); // Re-enable panning when measure mode is off
+      if (measureLine) map.removeLayer(measureLine);
+      if (previewLine) map.removeLayer(previewLine);
+      measureLine = null;
+      previewLine = null;
+      startPoint = null;
+      freeDrawPoints = [];
+      isDrawing = false;
+      isFreeDrawing = false;
+      hasFirstClick = false;
+    }
   });
 }, 200);
 
@@ -219,69 +222,41 @@ map.on('contextmenu', function (e) {
   L.DomEvent.preventDefault(e);
 });
 
-// Distance Logic with Click-and-Drag and Free-Draw
-map.on('mousedown', function (e) {
+// Distance Logic with Two-Click Straight Line and Free-Draw
+map.on('click', function (e) {
   if (!measureMode) return;
 
-  // Check if the starting point is within bounds
+  // Check if the point is within bounds
   if (!mapBounds.contains(e.latlng)) {
     showOutOfBoundsMessage();
     return;
   }
 
-  if (e.originalEvent.button === 0) { // Left click
-    isDrawing = true;
-    startPoint = clampLatLng(e.latlng);
+  const clampedLatLng = clampLatLng(e.latlng);
+
+  if (!hasFirstClick) {
+    // First click: Start the line
+    startPoint = clampedLatLng;
+    hasFirstClick = true;
     previewLine = L.polyline([startPoint, startPoint], {
       color: '#6fc7d7',
       weight: 3,
       dashArray: '5,10'
     }).addTo(map);
-  } else if (e.originalEvent.button === 2) { // Right click
-    isDrawing = true;
-    isFreeDrawing = true;
-    freeDrawPoints = [clampLatLng(e.latlng)];
-    previewLine = L.polyline(freeDrawPoints, {
-      color: '#6fc7d7',
-      weight: 3,
-      dashArray: '5,10'
-    }).addTo(map);
-  }
-});
-
-map.on('mousemove', function (e) {
-  if (!isDrawing || !measureMode) return;
-
-  const clampedLatLng = clampLatLng(e.latlng);
-
-  if (isFreeDrawing) {
-    freeDrawPoints.push(clampedLatLng);
-    previewLine.setLatLngs(freeDrawPoints);
   } else {
-    previewLine.setLatLngs([startPoint, clampedLatLng]);
-  }
-});
-
-map.on('mouseup', function (e) {
-  if (!isDrawing || !measureMode) return;
-
-  if (e.originalEvent.button === 0 || e.originalEvent.button === 2) { // Left or Right click
-    isDrawing = false;
+    // Second click: Finalize the line
+    hasFirstClick = false;
     if (previewLine) map.removeLayer(previewLine);
 
-    const clampedEndPoint = clampLatLng(e.latlng);
-    let pointsToMeasure = isFreeDrawing ? freeDrawPoints : [startPoint, clampedEndPoint];
+    const pointsToMeasure = [startPoint, clampedLatLng];
     let totalPixelDist = 0;
 
-    // Calculate total pixel distance for the line
-    for (let i = 0; i < pointsToMeasure.length - 1; i++) {
-      const pointA = map.latLngToContainerPoint(pointsToMeasure[i]);
-      const pointB = map.latLngToContainerPoint(pointsToMeasure[i + 1]);
-      const pixelDist = Math.sqrt(
-        Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2)
-      );
-      totalPixelDist += pixelDist;
-    }
+    // Calculate pixel distance
+    const pointA = map.latLngToContainerPoint(pointsToMeasure[0]);
+    const pointB = map.latLngToContainerPoint(pointsToMeasure[1]);
+    totalPixelDist = Math.sqrt(
+      Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2)
+    );
 
     // Minimum distance threshold (5 pixels)
     if (totalPixelDist < 5) {
@@ -289,8 +264,6 @@ map.on('mouseup', function (e) {
       measureLine = null;
       previewLine = null;
       startPoint = null;
-      freeDrawPoints = [];
-      isFreeDrawing = false;
       return;
     }
 
@@ -315,7 +288,94 @@ map.on('mouseup', function (e) {
     // Reset for next measurement
     previewLine = null;
     startPoint = null;
-    freeDrawPoints = [];
-    isFreeDrawing = false;
   }
+});
+
+map.on('mousemove', function (e) {
+  if (!measureMode || !hasFirstClick || isDrawing) return;
+
+  const clampedLatLng = clampLatLng(e.latlng);
+  if (previewLine) {
+    previewLine.setLatLngs([startPoint, clampedLatLng]);
+  }
+});
+
+// Free-Draw with Right Click (Unchanged)
+map.on('mousedown', function (e) {
+  if (!measureMode || e.originalEvent.button !== 2) return;
+
+  // Check if the starting point is within bounds
+  if (!mapBounds.contains(e.latlng)) {
+    showOutOfBoundsMessage();
+    return;
+  }
+
+  isDrawing = true;
+  isFreeDrawing = true;
+  freeDrawPoints = [clampLatLng(e.latlng)];
+  previewLine = L.polyline(freeDrawPoints, {
+    color: '#6fc7d7',
+    weight: 3,
+    dashArray: '5,10'
+  }).addTo(map);
+});
+
+map.on('mousemove', function (e) {
+  if (!isDrawing || !measureMode || !isFreeDrawing) return;
+
+  const clampedLatLng = clampLatLng(e.latlng);
+  freeDrawPoints.push(clampedLatLng);
+  previewLine.setLatLngs(freeDrawPoints);
+});
+
+map.on('mouseup', function (e) {
+  if (!isDrawing || !measureMode || e.originalEvent.button !== 2) return;
+
+  isDrawing = false;
+  isFreeDrawing = false;
+  if (previewLine) map.removeLayer(previewLine);
+
+  let pointsToMeasure = freeDrawPoints;
+  let totalPixelDist = 0;
+
+  // Calculate total pixel distance for the line
+  for (let i = 0; i < pointsToMeasure.length - 1; i++) {
+    const pointA = map.latLngToContainerPoint(pointsToMeasure[i]);
+    const pointB = map.latLngToContainerPoint(pointsToMeasure[i + 1]);
+    const pixelDist = Math.sqrt(
+      Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2)
+    );
+    totalPixelDist += pixelDist;
+  }
+
+  // Minimum distance threshold (5 pixels)
+  if (totalPixelDist < 5) {
+    if (measureLine) map.removeLayer(measureLine);
+    measureLine = null;
+    previewLine = null;
+    freeDrawPoints = [];
+    return;
+  }
+
+  // Convert pixels to km (scale: 100 pixels = 10 km, so 1 pixel = 0.1 km)
+  const km = (totalPixelDist * 0.1).toFixed(2);
+  const baseTime = (km / travelSpeed).toFixed(1);
+  const rests = Math.floor(baseTime / 6);
+  const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
+
+  if (measureLine) map.removeLayer(measureLine);
+  measureLine = L.polyline(pointsToMeasure, { color: '#6fc7d7', weight: 3 }).addTo(map);
+  measureLine.bindPopup(`
+    <div style="font-size: 1em; padding: 4px 8px;">
+      📏 <b>Distance:</b> ${km} km<br>
+      🚶 <b>Mode:</b> ${travelMode} (${travelSpeed} km/h)<br>
+      ⏱ <b>Base Time:</b> ${baseTime} hrs<br>
+      ⛺ <b>Rests:</b> ${rests} × 1 hr<br>
+      🕒 <b>Total Time:</b> ${totalTime} hrs
+    </div>
+  `).openPopup();
+
+  // Reset for next measurement
+  previewLine = null;
+  freeDrawPoints = [];
 });
