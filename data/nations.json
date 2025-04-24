@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "name": "Eryndor",
+    "color": "#5555ff",
+    "points": [[550, 1000], [610, 1000], [630, 940], [570, 900]],
+    "description": "A tense frontier watched by wary guards."
+  }
+]
