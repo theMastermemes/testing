@@ -14,6 +14,16 @@ const bounds = [[0, 0], [1080, 1920]];
 L.imageOverlay('placeholder-map.jpg', bounds).addTo(map);
 map.fitBounds(bounds);
 
+// Define LatLngBounds for interaction restriction
+const mapBounds = L.latLngBounds([0, 0], [1080, 1920]);
+
+// Function to clamp coordinates within bounds
+function clampLatLng(latlng) {
+  let lat = Math.max(0, Math.min(1080, latlng.lat));
+  let lng = Math.max(0, Math.min(1920, latlng.lng));
+  return L.latLng(lat, lng);
+}
+
 // Hide Loading Overlay After Map Loads
 map.on('load', () => {
   document.getElementById('loading-overlay').classList.add('hidden');
@@ -67,7 +77,7 @@ const town3 = L.marker([700, 800], { icon: outpostIcon }).bindPopup(
 });
 
 // === Conflict Zone ===
-L.circle([550, 880], {
+const conflictZone = L.circle([550, 880], {
   color: '#ff5555',
   fillColor: '#ff5555',
   fillOpacity: 0.3,
@@ -75,21 +85,21 @@ L.circle([550, 880], {
 }).bindPopup("⚔️ <b>Battle of Crimson Hollow</b><br>Blood stains the earth where two armies clashed.").addTo(layerConflict);
 
 // === Mana Zone ===
-L.polygon([[300, 800], [340, 820], [360, 780], [320, 760]], {
+const manaZone = L.polygon([[300, 800], [340, 820], [360, 780], [320, 760]], {
   color: '#00d4ff',
   fillColor: '#00d4ff',
   fillOpacity: 0.3
 }).bindPopup("🌊 <b>High Mana Concentration</b><br>Hydrophilic affinity—waters ripple with arcane power.").addTo(layerMana);
 
 // === Faith Zone ===
-L.polygon([[700, 300], [750, 320], [770, 280], [720, 260]], {
+const faithZone = L.polygon([[700, 300], [750, 320], [770, 280], [720, 260]], {
   color: '#ff5555',
   fillColor: '#ff5555',
   fillOpacity: 0.3
 }).bindPopup("🕍 <b>Faith Sphere: Red Faith</b><br>Devotees chant in crimson-lit halls.").addTo(layerFaith);
 
 // === Nation Borders ===
-L.polygon([[550, 1000], [610, 1000], [630, 940], [570, 900]], {
+const nationBorder = L.polygon([[550, 1000], [610, 1000], [630, 940], [570, 900]], {
   color: '#5555ff',
   dashArray: '4,6',
   weight: 2,
@@ -136,6 +146,24 @@ let isFreeDrawing = false;
 let startPoint = null;
 let travelSpeed = 8;
 let travelMode = "Horseback";
+
+// Feedback Message for Out-of-Bounds
+const outOfBoundsMessage = L.control({ position: 'topleft' });
+outOfBoundsMessage.onAdd = function () {
+  const div = L.DomUtil.create('div', 'out-of-bounds-message');
+  div.innerHTML = 'Please draw within the map bounds';
+  div.style.display = 'none';
+  return div;
+};
+outOfBoundsMessage.addTo(map);
+
+function showOutOfBoundsMessage() {
+  const messageDiv = document.querySelector('.out-of-bounds-message');
+  messageDiv.style.display = 'block';
+  setTimeout(() => {
+    messageDiv.style.display = 'none';
+  }, 2000);
+}
 
 // Travel Selector
 const travelControl = L.control({ position: 'topright' });
@@ -195,9 +223,15 @@ map.on('contextmenu', function (e) {
 map.on('mousedown', function (e) {
   if (!measureMode) return;
 
+  // Check if the starting point is within bounds
+  if (!mapBounds.contains(e.latlng)) {
+    showOutOfBoundsMessage();
+    return;
+  }
+
   if (e.originalEvent.button === 0) { // Left click
     isDrawing = true;
-    startPoint = e.latlng;
+    startPoint = clampLatLng(e.latlng);
     previewLine = L.polyline([startPoint, startPoint], {
       color: '#6fc7d7',
       weight: 3,
@@ -206,7 +240,7 @@ map.on('mousedown', function (e) {
   } else if (e.originalEvent.button === 2) { // Right click
     isDrawing = true;
     isFreeDrawing = true;
-    freeDrawPoints = [e.latlng];
+    freeDrawPoints = [clampLatLng(e.latlng)];
     previewLine = L.polyline(freeDrawPoints, {
       color: '#6fc7d7',
       weight: 3,
@@ -218,11 +252,13 @@ map.on('mousedown', function (e) {
 map.on('mousemove', function (e) {
   if (!isDrawing || !measureMode) return;
 
+  const clampedLatLng = clampLatLng(e.latlng);
+
   if (isFreeDrawing) {
-    freeDrawPoints.push(e.latlng);
+    freeDrawPoints.push(clampedLatLng);
     previewLine.setLatLngs(freeDrawPoints);
   } else {
-    previewLine.setLatLngs([startPoint, e.latlng]);
+    previewLine.setLatLngs([startPoint, clampedLatLng]);
   }
 });
 
@@ -231,10 +267,10 @@ map.on('mouseup', function (e) {
 
   if (e.originalEvent.button === 0 || e.originalEvent.button === 2) { // Left or Right click
     isDrawing = false;
-    if (measureLine) map.removeLayer(measureLine);
     if (previewLine) map.removeLayer(previewLine);
 
-    let pointsToMeasure = isFreeDrawing ? freeDrawPoints : [startPoint, e.latlng];
+    const clampedEndPoint = clampLatLng(e.latlng);
+    let pointsToMeasure = isFreeDrawing ? freeDrawPoints : [startPoint, clampedEndPoint];
     let totalPixelDist = 0;
 
     // Calculate total pixel distance for the line
@@ -247,12 +283,24 @@ map.on('mouseup', function (e) {
       totalPixelDist += pixelDist;
     }
 
+    // Minimum distance threshold (5 pixels)
+    if (totalPixelDist < 5) {
+      if (measureLine) map.removeLayer(measureLine);
+      measureLine = null;
+      previewLine = null;
+      startPoint = null;
+      freeDrawPoints = [];
+      isFreeDrawing = false;
+      return;
+    }
+
     // Convert pixels to km (scale: 100 pixels = 10 km, so 1 pixel = 0.1 km)
     const km = (totalPixelDist * 0.1).toFixed(2);
     const baseTime = (km / travelSpeed).toFixed(1);
     const rests = Math.floor(baseTime / 6);
     const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
 
+    if (measureLine) map.removeLayer(measureLine);
     measureLine = L.polyline(pointsToMeasure, { color: '#6fc7d7', weight: 3 }).addTo(map);
     measureLine.bindPopup(`
       <div style="font-size: 1em; padding: 4px 8px;">
