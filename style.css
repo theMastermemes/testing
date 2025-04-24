@@ -3,16 +3,16 @@ body, html {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: 'Cinzel', serif; /* Fantasy-inspired font (Google Fonts) */
-  background-color: #1a1a1a; /* Deep black for dark fantasy */
-  color: #e0e0e0; /* Light grey for readability */
+  font-family: 'Cinzel', serif;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
   overflow: hidden;
 }
 
 #map {
   height: 100vh;
   width: 100%;
-  background-color: #2a2a2a; /* Slightly lighter map background */
+  background-color: #2a2a2a;
 }
 
 /* Loading Overlay */
@@ -90,7 +90,7 @@ body, html {
   font-size: 1em;
 }
 .leaflet-control-layers input[type="checkbox"] {
-  accent-color: #6fc7d7; /* Custom checkbox color */
+  accent-color: #6fc7d7;
 }
 .leaflet-control-layers-separator {
   border-top: 1px solid #444;
@@ -114,6 +114,15 @@ body, html {
   background: #2a2a2a;
   border-left: 1px solid #6fc7d7;
   border-right: 1px solid #6fc7d7;
+}
+
+/* Settlement Markers */
+.settlement-marker img {
+  filter: drop-shadow(0 0 5px #6fc7d7) drop-shadow(0 0 10px #6fc7d7);
+  transition: transform 0.2s ease;
+}
+.settlement-marker img:hover {
+  transform: scale(1.1);
 }
 
 /* Measure Tool Button */
