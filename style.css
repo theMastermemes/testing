@@ -149,6 +149,18 @@ body, html {
   margin-right: 5px;
 }
 
+/* Out-of-Bounds Message */
+.out-of-bounds-message {
+  background: #2a2a2a;
+  border: 1px solid #ff5555;
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: #ff5555;
+  font-size: 0.9em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  display: none;
+}
+
 /* Measure Tool Button */
 #toggleMeasure {
   display: flex;
