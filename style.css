@@ -1,11 +1,84 @@
+/* Base Layout */
 body, html {
   height: 100%;
   margin: 0;
   font-family: 'Times New Roman', serif;
-  background-color: #1a1a1a;
+  background-color: #121212;
 }
 
+/* Map container */
 #map {
   height: 100vh;
   width: 100%;
+}
+
+/* Layer Control Box Styling */
+.leaflet-control-layers {
+  font-size: 1em;
+  background: #1a1a1a !important;
+  color: #ddd !important;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.7);
+  border: 1px solid #444;
+}
+
+.leaflet-control-layers label {
+  display: block;
+  padding: 6px 0;
+  margin-bottom: 2px;
+  cursor: pointer;
+}
+
+.leaflet-control-layers-separator {
+  margin: 8px 0;
+  border-bottom: 1px solid #333;
+}
+
+/* Distance Tool Button */
+.leaflet-bar a {
+  text-align: center;
+  background: #222;
+  color: cyan;
+  border: 1px solid #333;
+  transition: all 0.2s ease;
+  font-weight: bold;
+  font-family: 'Cinzel', serif;
+}
+
+.leaflet-bar a:hover {
+  background: cyan;
+  color: #000;
+}
+
+/* Popup Styling */
+.leaflet-popup-content {
+  font-size: 1em;
+  color: #ddd;
+  background: #1e1e1e;
+  font-family: 'Times New Roman', serif;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #1e1e1e;
+  border: 1px solid #555;
+  border-radius: 10px;
+}
+
+.leaflet-popup-tip {
+  background: #1e1e1e;
+}
+
+/* Map marker hover (optional animation) */
+.leaflet-marker-icon {
+  transition: transform 0.2s ease;
+}
+
+.leaflet-marker-icon:hover {
+  transform: scale(1.2);
+}
+
+/* Optional: Glowing conflict circles or custom marker class */
+.glow-circle {
+  box-shadow: 0 0 10px 2px red;
 }
