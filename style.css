@@ -146,6 +146,9 @@ body, html {
   background: #6fc7d7;
   color: #1a1a1a;
 }
+#toggleMeasure.active::after {
+  color: #1a1a1a;
+}
 
 /* Travel Mode Selector */
 #travelSelector {
