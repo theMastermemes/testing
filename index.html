@@ -2,16 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AOA Interactive Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ages of Ankyra Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="favicon.png"> <!-- Add a favicon for branding -->
 </head>
 <body>
+  <div id="loading-overlay">
+    <div class="loader"></div>
+    <p>Loading the Ages of Ankyra...</p>
+  </div>
   <div id="map"></div>
-
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="map.js"></script>
 </body>
 </html>
-
