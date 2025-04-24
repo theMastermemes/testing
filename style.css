@@ -1,1 +1,11 @@
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: 'Times New Roman', serif;
+  background-color: #1a1a1a;
+}
 
+#map {
+  height: 100vh;
+  width: 100%;
+}
