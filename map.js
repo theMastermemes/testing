@@ -3,7 +3,7 @@ const map = L.map('map', {
   minZoom: -1,
   maxZoom: 2,
   crs: L.CRS.Simple,
-  zoomControl: false // We'll add custom zoom controls
+  zoomControl: false
 });
 
 // Add Custom Zoom Controls
@@ -18,7 +18,7 @@ map.fitBounds(bounds);
 map.on('load', () => {
   document.getElementById('loading-overlay').classList.add('hidden');
 });
-setTimeout(() => map.fire('load'), 500); // Fallback in case load event doesn't fire
+setTimeout(() => map.fire('load'), 500);
 
 // === Layers ===
 const layerSettlements = L.layerGroup().addTo(map);
@@ -28,24 +28,40 @@ const layerMana = L.layerGroup();
 const layerFaith = L.layerGroup();
 
 // === Markers / Settlements ===
-const town1 = L.marker([600, 960], {
-  icon: L.divIcon({
-    className: 'custom-marker',
-    html: '<div style="color: #6fc7d7; font-size: 1.2em;">🏰</div>',
-    iconSize: [30, 30]
-  })
-}).bindPopup("<b>Whispershade Woods</b><br>A hydromancer’s battlefield, where the air hums with arcane residue.");
-const town2 = L.marker([400, 500], {
-  icon: L.divIcon({
-    className: 'custom-marker',
-    html: '<div style="color: #6fc7d7; font-size: 1.2em;">🏰</div>',
-    iconSize: [30, 30]
-  })
-}).bindPopup("<b>Duskhaven</b><br>A shadowy port of sea rituals and rogue guilds, cloaked in mist.");
-[town1, town2].forEach(town => {
+// Village: Whispershade Woods
+const villageIcon = L.divIcon({
+  className: 'settlement-marker',
+  html: '<img src="village.svg" style="width: 40px; height: 40px;" />',
+  iconSize: [40, 40]
+});
+const town1 = L.marker([600, 960], { icon: villageIcon }).bindPopup(
+  "<b>Whispershade Woods</b><br>A hydromancer’s battlefield, where the air hums with arcane residue."
+);
+
+// City: Duskhaven
+const cityIcon = L.divIcon({
+  className: 'settlement-marker',
+  html: '<img src="city.svg" style="width: 50px; height: 50px;" />',
+  iconSize: [50, 50]
+});
+const town2 = L.marker([400, 500], { icon: cityIcon }).bindPopup(
+  "<b>Duskhaven</b><br>A shadowy port of sea rituals and rogue guilds, cloaked in mist."
+);
+
+// Outpost: Example Settlement
+const outpostIcon = L.divIcon({
+  className: 'settlement-marker',
+  html: '<img src="outpost.svg" style="width: 40px; height: 40px;" />',
+  iconSize: [40, 40]
+});
+const town3 = L.marker([700, 800], { icon: outpostIcon }).bindPopup(
+  "<b>Shadowwatch Outpost</b><br>A lonely watchtower guarding the borderlands."
+);
+
+[town1, town2, town3].forEach(town => {
   town.addTo(layerSettlements);
   town.on('click', () => {
-    map.flyTo(town.getLatLng(), 1, { duration: 1 }); // Smooth zoom animation
+    map.flyTo(town.getLatLng(), 1, { duration: 1 });
     town.openPopup();
   });
 });
@@ -131,7 +147,7 @@ setTimeout(() => {
 
   toggleMeasure.addEventListener('click', function (e) {
     e.preventDefault();
-    L.DomEvent.stopPropagation(e); // Prevent the click from bubbling to the map
+    L.DomEvent.stopPropagation(e);
     measureMode = !measureMode;
     toggleMeasure.classList.toggle('active', measureMode);
     if (measureLine) map.removeLayer(measureLine);
@@ -146,14 +162,14 @@ map.on('click', function (e) {
   measurePoints.push(e.latlng);
 
   if (measurePoints.length > 2) {
-    measurePoints = [measurePoints[1]]; // Reset to last point for continuous measurement
+    measurePoints = [measurePoints[1]];
     if (measureLine) map.removeLayer(measureLine);
     measureLine = null;
   }
 
   if (measurePoints.length === 2) {
     const dist = map.distance(measurePoints[0], measurePoints[1]);
-    const km = (dist / 100).toFixed(2); // Adjusted for pixel-to-km conversion
+    const km = (dist / 100).toFixed(2);
     const baseTime = (km / travelSpeed).toFixed(1);
     const rests = Math.floor(baseTime / 6);
     const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
