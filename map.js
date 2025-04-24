@@ -48,7 +48,7 @@ const town2 = L.marker([400, 500], { icon: cityIcon }).bindPopup(
   "<b>Duskhaven</b><br>A shadowy port of sea rituals and rogue guilds, cloaked in mist."
 );
 
-// Outpost: Example Settlement
+// Outpost: Shadowwatch Outpost
 const outpostIcon = L.divIcon({
   className: 'settlement-marker',
   html: '<img src="outpost.svg" style="width: 40px; height: 40px;" />',
@@ -105,6 +105,27 @@ L.control.layers(null, {
   "🕍 Faith Influence": layerFaith
 }, { position: 'topright' }).addTo(map);
 
+// === Map Legend ===
+const legend = L.control({ position: 'bottomright' });
+legend.onAdd = function () {
+  const div = L.DomUtil.create('div', 'map-legend');
+  div.innerHTML = `
+    <h4>Legend</h4>
+    <div><img src="village.svg" style="width: 20px; height: 20px;"> Village</div>
+    <div><img src="city.svg" style="width: 25px; height: 25px;"> City</div>
+    <div><img src="outpost.svg" style="width: 20px; height: 20px;"> Outpost</div>
+    <div><span style="color: #ff5555;">⚔️</span> Conflict Zone</div>
+    <div><span style="color: #00d4ff;">🌊</span> Mana Zone</div>
+    <div><span style="color: #ff5555;">🕍</span> Faith Influence</div>
+    <div><span style="color: #5555ff;">🧭</span> Nation Border</div>
+    <div style="margin-top: 10px;">
+      <strong>Scale:</strong> 100 pixels = 10 km
+    </div>
+  `;
+  return div;
+};
+legend.addTo(map);
+
 // === Distance Tool + Travel Selector ===
 let measureMode = false;
 let measurePoints = [];
@@ -156,20 +177,33 @@ setTimeout(() => {
   });
 }, 200);
 
-// Distance Logic
+// Distance Logic (Pixel-Based)
 map.on('click', function (e) {
   if (!measureMode) return;
+
+  // Log the clicked coordinates for debugging
+  console.log('Clicked at:', e.latlng);
+
   measurePoints.push(e.latlng);
 
   if (measurePoints.length > 2) {
-    measurePoints = [measurePoints[1]];
+    measurePoints = [measurePoints[1]]; // Continuous measurement
     if (measureLine) map.removeLayer(measureLine);
     measureLine = null;
   }
 
   if (measurePoints.length === 2) {
-    const dist = map.distance(measurePoints[0], measurePoints[1]);
-    const km = (dist / 100).toFixed(2);
+    // Convert latLng to pixel coordinates
+    const pointA = map.latLngToContainerPoint(measurePoints[0]);
+    const pointB = map.latLngToContainerPoint(measurePoints[1]);
+
+    // Calculate pixel distance
+    const pixelDist = Math.sqrt(
+      Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2)
+    );
+
+    // Convert pixels to km (scale: 100 pixels = 10 km, so 1 pixel = 0.1 km)
+    const km = (pixelDist * 0.1).toFixed(2);
     const baseTime = (km / travelSpeed).toFixed(1);
     const rests = Math.floor(baseTime / 6);
     const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
