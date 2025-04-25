@@ -10,6 +10,7 @@ const map = L.map('map', {
 console.log('mapSetup.js: Map initialized');
 
 L.control.zoom({ position: 'topright' }).addTo(map);
+console.log('mapSetup.js: Zoom control added');
 
 // Updated bounds for the new map image (2274 x 1700 pixels)
 const bounds = [[0, 0], [1700, 2274]];
