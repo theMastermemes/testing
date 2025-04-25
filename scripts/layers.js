@@ -105,7 +105,7 @@ legend.onAdd = function () {
     <div><span style="color: #ff5555;">🕍</span> Faith Influence</div>
     <div><span style="color: #5555ff;">🧭</span> Nation Border</div>
     <div style="margin-top: 10px;">
-      <strong>Scale:</strong> 100 pixels = 10 km
+      <strong>Scale:</strong> 100 pixels = 28.71 km
     </div>
   `;
   return div;
