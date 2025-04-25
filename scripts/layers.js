@@ -1,12 +1,34 @@
-const layerSettlements = L.layerGroup().addTo(map);
-const layerNationBorders = L.layerGroup();
-const layerConflict = L.layerGroup();
-const layerMana = L.layerGroup();
-const layerFaith = L.layerGroup();
+console.log('layers.js: Script loaded');
+
+// Guard against redeclaration
+let layerSettlements, layerNationBorders, layerConflict, layerMana, layerFaith;
+if (!window.layerSettlements) {
+  layerSettlements = L.layerGroup().addTo(map);
+  layerNationBorders = L.layerGroup();
+  layerConflict = L.layerGroup();
+  layerMana = L.layerGroup();
+  layerFaith = L.layerGroup();
+  window.layerSettlements = layerSettlements; // Store in window to prevent redeclaration
+  window.layerNationBorders = layerNationBorders;
+  window.layerConflict = layerConflict;
+  window.layerMana = layerMana;
+  window.layerFaith = layerFaith;
+} else {
+  layerSettlements = window.layerSettlements;
+  layerNationBorders = window.layerNationBorders;
+  layerConflict = window.layerConflict;
+  layerMana = window.layerMana;
+  layerFaith = window.layerFaith;
+}
+
+console.log('layers.js: Layer groups initialized');
 
 // Load Settlements
 fetch('data/settlements.json')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) throw new Error('Failed to load settlements.json');
+    return response.json();
+  })
   .then(settlements => {
     settlements.forEach(settlement => {
       const iconType = settlement.type === 'city' ? 'city' : settlement.type === 'village' ? 'village' : 'outpost';
@@ -21,12 +43,16 @@ fetch('data/settlements.json')
       marker.on('click', () => map.flyTo(marker.getLatLng(), 1, { duration: 1 }));
       marker.addTo(layerSettlements);
     });
+    console.log('layers.js: Settlements loaded');
   })
-  .catch(error => console.error('Error loading settlements:', error));
+  .catch(error => console.error('layers.js: Error loading settlements:', error));
 
 // Load Nation Borders
 fetch('data/nations.json')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) throw new Error('Failed to load nations.json');
+    return response.json();
+  })
   .then(nations => {
     nations.forEach(nation => {
       L.polygon(nation.points, {
@@ -36,12 +62,16 @@ fetch('data/nations.json')
         fillOpacity: 0
       }).bindPopup(`🧭 <b>Border of ${nation.name}</b><br>${nation.description}`).addTo(layerNationBorders);
     });
+    console.log('layers.js: Nation borders loaded');
   })
-  .catch(error => console.error('Error loading nations:', error));
+  .catch(error => console.error('layers.js: Error loading nations:', error));
 
 // Load Conflict Zones
 fetch('data/conflictZones.json')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) throw new Error('Failed to load conflictZones.json');
+    return response.json();
+  })
   .then(conflictZones => {
     conflictZones.forEach(zone => {
       L.circle([zone.lat, zone.lng], {
@@ -51,12 +81,16 @@ fetch('data/conflictZones.json')
         radius: zone.radius
       }).bindPopup(`⚔️ <b>${zone.description}</b>`).addTo(layerConflict);
     });
+    console.log('layers.js: Conflict zones loaded');
   })
-  .catch(error => console.error('Error loading conflict zones:', error));
+  .catch(error => console.error('layers.js: Error loading conflict zones:', error));
 
 // Load Mana Zones
 fetch('data/manaZones.json')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) throw new Error('Failed to load manaZones.json');
+    return response.json();
+  })
   .then(manaZones => {
     manaZones.forEach(zone => {
       L.polygon(zone.points, {
@@ -65,12 +99,16 @@ fetch('data/manaZones.json')
         fillOpacity: 0.3
       }).bindPopup(`🌊 <b>${zone.description}</b>`).addTo(layerMana);
     });
+    console.log('layers.js: Mana zones loaded');
   })
-  .catch(error => console.error('Error loading mana zones:', error));
+  .catch(error => console.error('layers.js: Error loading mana zones:', error));
 
 // Load Faith Zones
 fetch('data/faithZones.json')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) throw new Error('Failed to load faithZones.json');
+    return response.json();
+  })
   .then(faithZones => {
     faithZones.forEach(zone => {
       L.polygon(zone.points, {
@@ -79,8 +117,9 @@ fetch('data/faithZones.json')
         fillOpacity: 0.3
       }).bindPopup(`🕍 <b>${zone.description}</b>`).addTo(layerFaith);
     });
+    console.log('layers.js: Faith zones loaded');
   })
-  .catch(error => console.error('Error loading faith zones:', error));
+  .catch(error => console.error('layers.js: Error loading faith zones:', error));
 
 // Layer Toggle Control
 L.control.layers(null, {
@@ -111,3 +150,5 @@ legend.onAdd = function () {
   return div;
 };
 legend.addTo(map);
+
+console.log('layers.js: Layer control and legend added');
