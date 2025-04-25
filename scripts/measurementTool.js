@@ -1,3 +1,6 @@
+console.log('measurementTool.js: Script loaded');
+
+// Guard against redeclaration
 let measureMode = false;
 let measureLines = [];
 let previewLine = null;
@@ -9,20 +12,49 @@ let hasFirstClick = false;
 let travelSpeed = 8;
 let travelMode = "Horseback";
 
+if (window.measureToolInitialized) {
+  console.log('measurementTool.js: Already initialized, skipping redeclaration');
+  measureMode = window.measureMode;
+  measureLines = window.measureLines;
+  previewLine = window.previewLine;
+  freeDrawPoints = window.freeDrawPoints;
+  isDrawing = window.isDrawing;
+  isFreeDrawing = window.isFreeDrawing;
+  startPoint = window.startPoint;
+  hasFirstClick = window.hasFirstClick;
+  travelSpeed = window.travelSpeed;
+  travelMode = window.travelMode;
+} else {
+  window.measureToolInitialized = true;
+  window.measureMode = measureMode;
+  window.measureLines = measureLines;
+  window.previewLine = previewLine;
+  window.freeDrawPoints = freeDrawPoints;
+  window.isDrawing = isDrawing;
+  window.isFreeDrawing = isFreeDrawing;
+  window.startPoint = startPoint;
+  window.hasFirstClick = hasFirstClick;
+  window.travelSpeed = travelSpeed;
+  window.travelMode = travelMode;
+  console.log('measurementTool.js: Variables initialized');
+}
+
 // Function to clear all measurement lines
 function clearMeasureLines() {
   measureLines.forEach(line => {
     if (map.hasLayer(line)) {
       map.removeLayer(line);
-      console.log('Removed a measurement line');
+      console.log('measurementTool.js: Removed a measurement line');
     }
   });
   measureLines = [];
+  window.measureLines = measureLines;
   if (previewLine && map.hasLayer(previewLine)) {
     map.removeLayer(previewLine);
-    console.log('Removed preview line');
+    console.log('measurementTool.js: Removed preview line');
   }
   previewLine = null;
+  window.previewLine = previewLine;
 }
 
 // Travel Selector
@@ -74,6 +106,8 @@ setTimeout(() => {
   travelSelector.addEventListener('change', function () {
     travelMode = this.value;
     travelSpeed = travelMode === "Foot" ? 5 : travelMode === "Carriage" ? 6 : 8;
+    window.travelMode = travelMode;
+    window.travelSpeed = travelSpeed;
   });
 
   toggleMeasure.addEventListener('click', function (e) {
@@ -81,6 +115,7 @@ setTimeout(() => {
     L.DomEvent.stopPropagation(e);
     measureMode = !measureMode;
     toggleMeasure.classList.toggle('active', measureMode);
+    window.measureMode = measureMode;
     if (measureMode) {
       map.dragging.disable();
     } else {
@@ -91,6 +126,11 @@ setTimeout(() => {
       isDrawing = false;
       isFreeDrawing = false;
       hasFirstClick = false;
+      window.startPoint = startPoint;
+      window.freeDrawPoints = freeDrawPoints;
+      window.isDrawing = isDrawing;
+      window.isFreeDrawing = isFreeDrawing;
+      window.hasFirstClick = hasFirstClick;
     }
   });
 }, 200);
@@ -119,6 +159,9 @@ map.on('click', function (e) {
       weight: 3,
       dashArray: '5,10'
     }).addTo(map);
+    window.startPoint = startPoint;
+    window.hasFirstClick = hasFirstClick;
+    window.previewLine = previewLine;
   } else {
     hasFirstClick = false;
     if (previewLine) map.removeLayer(previewLine);
@@ -135,10 +178,10 @@ map.on('click', function (e) {
     if (totalPixelDist < 5) {
       clearMeasureLines();
       startPoint = null;
+      window.startPoint = startPoint;
       return;
     }
 
-    // Updated scale: 1 pixel = 0.2871 km (100 pixels = 28.71 km)
     const km = (totalPixelDist * pixelToKmScale).toFixed(2);
     const baseTime = (km / travelSpeed).toFixed(1);
     const rests = Math.floor(baseTime / 6);
@@ -156,10 +199,13 @@ map.on('click', function (e) {
       </div>
     `).openPopup();
     measureLines.push(newLine);
-    console.log('Added new straight line, total lines:', measureLines.length);
+    window.measureLines = measureLines;
+    console.log('measurementTool.js: Added new straight line, total lines:', measureLines.length);
 
     previewLine = null;
     startPoint = null;
+    window.previewLine = previewLine;
+    window.startPoint = startPoint;
   }
 });
 
@@ -169,6 +215,7 @@ map.on('mousemove', function (e) {
   const clampedLatLng = clampLatLng(e.latlng);
   if (previewLine) {
     previewLine.setLatLngs([startPoint, clampedLatLng]);
+    window.previewLine = previewLine;
   }
 });
 
@@ -189,6 +236,10 @@ map.on('mousedown', function (e) {
     weight: 3,
     dashArray: '5,10'
   }).addTo(map);
+  window.isDrawing = isDrawing;
+  window.isFreeDrawing = isFreeDrawing;
+  window.freeDrawPoints = freeDrawPoints;
+  window.previewLine = previewLine;
 });
 
 map.on('mousemove', function (e) {
@@ -197,6 +248,8 @@ map.on('mousemove', function (e) {
   const clampedLatLng = clampLatLng(e.latlng);
   freeDrawPoints.push(clampedLatLng);
   previewLine.setLatLngs(freeDrawPoints);
+  window.freeDrawPoints = freeDrawPoints;
+  window.previewLine = previewLine;
 });
 
 map.on('mouseup', function (e) {
@@ -221,10 +274,10 @@ map.on('mouseup', function (e) {
   if (totalPixelDist < 5) {
     clearMeasureLines();
     freeDrawPoints = [];
+    window.freeDrawPoints = freeDrawPoints;
     return;
   }
 
-  // Updated scale: 1 pixel = 0.2871 km (100 pixels = 28.71 km)
   const km = (totalPixelDist * pixelToKmScale).toFixed(2);
   const baseTime = (km / travelSpeed).toFixed(1);
   const rests = Math.floor(baseTime / 6);
@@ -242,8 +295,11 @@ map.on('mouseup', function (e) {
     </div>
   `).openPopup();
   measureLines.push(newLine);
-  console.log('Added new free-draw line, total lines:', measureLines.length);
+  window.measureLines = measureLines;
+  console.log('measurementTool.js: Added new free-draw line, total lines:', measureLines.length);
 
   previewLine = null;
   freeDrawPoints = [];
+  window.previewLine = previewLine;
+  window.freeDrawPoints = freeDrawPoints;
 });
