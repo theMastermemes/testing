@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ages of Ankyra Map</title>
   <link rel="stylesheet" href="assets/leaflet.css" />
-  <!-- Fallback to CDN if local copy fails -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" onerror="this.onerror=null; this.href='https://unpkg.com/leaflet/dist/leaflet.css';" />
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,17 +13,20 @@
     <p>Loading the Ages of Ankyra...</p>
   </div>
   <div id="map"></div>
-  <script src="assets/leaflet.js"ソーケットスクリプトの実行中にエラーが発生しました。コードを再試行してください: defer></script>
-  <!-- Fallback to CDN if local copy fails -->
-  <script>
-    if (typeof L === 'undefined') {
-      console.error('Local Leaflet failed to load. Loading CDN as fallback.');
-      document.write('<script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>');
-    }
-  </script>
+  <script src="assets/leaflet.js" defer></script>
   <script src="scripts/mapSetup.js" defer></script>
   <script src="scripts/layers.js" defer></script>
   <script src="scripts/measurementTool.js" defer></script>
   <script src="map.js" defer></script>
+  <!-- Global fallback to hide loading overlay -->
+  <script>
+    setTimeout(() => {
+      const loadingOverlay = document.getElementById('loading-overlay');
+      if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+        console.error('Global fallback: Forcing loading overlay to hide after 45 seconds due to potential script failure');
+        loadingOverlay.classList.add('hidden');
+      }
+    }, 45000);
+  </script>
 </body>
 </html>
