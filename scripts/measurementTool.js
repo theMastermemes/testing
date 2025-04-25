@@ -138,7 +138,8 @@ map.on('click', function (e) {
       return;
     }
 
-    const km = (totalPixelDist * 0.1).toFixed(2);
+    // Updated scale: 1 pixel = 0.2871 km (100 pixels = 28.71 km)
+    const km = (totalPixelDist * pixelToKmScale).toFixed(2);
     const baseTime = (km / travelSpeed).toFixed(1);
     const rests = Math.floor(baseTime / 6);
     const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
@@ -223,7 +224,8 @@ map.on('mouseup', function (e) {
     return;
   }
 
-  const km = (totalPixelDist * 0.1).toFixed(2);
+  // Updated scale: 1 pixel = 0.2871 km (100 pixels = 28.71 km)
+  const km = (totalPixelDist * pixelToKmScale).toFixed(2);
   const baseTime = (km / travelSpeed).toFixed(1);
   const rests = Math.floor(baseTime / 6);
   const totalTime = (parseFloat(baseTime) + rests).toFixed(1);
