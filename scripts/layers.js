@@ -28,10 +28,22 @@ try {
       settlements.forEach(settlement => {
         const iconType = settlement.type === 'city' ? 'city' : settlement.type === 'village' ? 'village' : 'outpost';
         const iconSize = settlement.type === 'city' ? [50, 50] : [40, 40];
+        const iconUrl = `assets/${iconType}.svg`;
+
+        // Test the SVG URL directly
+        const testImage = new Image();
+        testImage.src = iconUrl;
+        testImage.onload = () => {
+          console.log(`layers.js: SVG loaded successfully: ${iconUrl}`);
+        };
+        testImage.onerror = () => {
+          console.error(`layers.js: Failed to load SVG: ${iconUrl}`);
+        };
+
         const marker = L.marker([settlement.lat, settlement.lng], {
           icon: L.divIcon({
             className: 'settlement-marker',
-            html: `<img src="assets/${iconType}.svg" style="width: ${iconSize[0]}px; height: ${iconSize[1]}px;" />`,
+            html: `<img src="${iconUrl}" style="width: ${iconSize[0]}px; height: ${iconSize[1]}px;" onerror="this.src='https://via.placeholder.com/40?text=${iconType}';" />`,
             iconSize: iconSize
           })
         }).bindPopup(`<b>${settlement.name}</b><br>${settlement.description}`);
@@ -131,9 +143,9 @@ try {
     const div = L.DomUtil.create('div', 'map-legend');
     div.innerHTML = `
       <h4>Legend</h4>
-      <div><img src="assets/village.svg" style="width: 20px; height: 20px;"> Village</div>
-      <div><img src="assets/city.svg" style="width: 25px; height: 25px;"> City</div>
-      <div><img src="assets/outpost.svg" style="width: 20px; height: 20px;"> Outpost</div>
+      <div><img src="assets/village.svg" style="width: 20px; height: 20px;" onerror="this.src='https://via.placeholder.com/20?text=Village';"> Village</div>
+      <div><img src="assets/city.svg" style="width: 25px; height: 25px;" onerror="this.src='https://via.placeholder.com/25?text=City';"> City</div>
+      <div><img src="assets/outpost.svg" style="width: 20px; height: 20px;" onerror="this.src='https://via.placeholder.com/20?text=Outpost';"> Outpost</div>
       <div><span style="color: #ff5555;">⚔️</span> Conflict Zone</div>
       <div><span style="color: #00d4ff;">🌊</span> Mana Zone</div>
       <div><span style="color: #ff5555;">🕍</span> Faith Influence</div>
