@@ -8,20 +8,20 @@ if (!window.layerSettlements) {
   layerConflict = L.layerGroup();
   layerMana = L.layerGroup();
   layerFaith = L.layerGroup();
-  window.layerSettlements = layerSettlements; // Store in window to prevent redeclaration
+  window.layerSettlements = layerSettlements;
   window.layerNationBorders = layerNationBorders;
   window.layerConflict = layerConflict;
   window.layerMana = layerMana;
   window.layerFaith = layerFaith;
+  console.log('layers.js: Layer groups initialized');
 } else {
   layerSettlements = window.layerSettlements;
   layerNationBorders = window.layerNationBorders;
   layerConflict = window.layerConflict;
   layerMana = window.layerMana;
   layerFaith = window.layerFaith;
+  console.log('layers.js: Layer groups already initialized');
 }
-
-console.log('layers.js: Layer groups initialized');
 
 // Load Settlements
 fetch('data/settlements.json')
